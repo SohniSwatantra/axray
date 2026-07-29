@@ -1,6 +1,21 @@
-# AXray
+<div align="center">
 
-**Lighthouse for Agent Experience (AX).**
+<img src="assets/logo.svg" alt="AXray" width="340" />
+
+### Lighthouse for Agent Experience (AX)
+
+Measure how AI agents – **ChatGPT, Claude, Perplexity** – read, understand, and recommend your site.<br/>
+Get a real, measured **Agent Experience (AX) score** and the fixes that make agents pick you.
+
+![Measured AX Score](https://img.shields.io/badge/Measured_AX_Score-C6F24E?style=for-the-badge)
+![Multi-Model Council](https://img.shields.io/badge/Multi--Model_Council-C6F24E?style=for-the-badge)
+![llms.txt · Schema · Agents](https://img.shields.io/badge/llms.txt_·_Schema_·_Agents-C6F24E?style=for-the-badge)
+
+[**getaxray.com**](https://getaxray.com) · [Quick start](#quick-start) · [GitHub Action](#github-action) · [What gets measured](#what-gets-measured-no-api-key-needed)
+
+</div>
+
+---
 
 Your next customers are AI agents. AXray scores how well ChatGPT, Claude, Perplexity — and the agents built on them - can read, understand, and act on your site. Run it after every feature ship, gate your pipeline on it, and watch the score climb as you make your product agent-friendly.
 
