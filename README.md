@@ -2,10 +2,10 @@
 
 **Lighthouse for Agent Experience (AX).**
 
-Your next customers are AI agents. AXray scores how well ChatGPT, Claude, Perplexity — and the agents built on them — can read, understand, and act on your site. Run it after every feature ship, gate your pipeline on it, and watch the score climb as you make your product agent-friendly.
+Your next customers are AI agents. AXray scores how well ChatGPT, Claude, Perplexity — and the agents built on them - can read, understand, and act on your site. Run it after every feature ship, gate your pipeline on it, and watch the score climb as you make your product agent-friendly.
 
 ```
-AXray — Agent Experience report
+AXray - Agent Experience report
 https://your-site.com
 ────────────────────────────────────────────────────────────────
 
