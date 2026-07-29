@@ -1,0 +1,45 @@
+{
+  "name": "axray",
+  "version": "0.1.0",
+  "description": "Lighthouse for Agent Experience (AX) — score how well AI agents (ChatGPT, Claude, Perplexity) can read, understand, and act on your site. Zero dependencies, CI-ready.",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "axray": "dist/index.js"
+  },
+  "main": "dist/index.js",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsc",
+    "prepare": "tsc",
+    "start": "node dist/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SohniSwatantra/axray.git"
+  },
+  "homepage": "https://getaxray.com",
+  "keywords": [
+    "agent-experience",
+    "ax",
+    "llms.txt",
+    "ai-agents",
+    "lighthouse",
+    "ci",
+    "seo",
+    "mcp",
+    "structured-data",
+    "openrouter"
+  ],
+  "devDependencies": {
+    "typescript": "^5.6.0",
+    "@types/node": "^20.0.0"
+  }
+}

@@ -1,0 +1,19 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build-and-selftest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npm install
+      - run: npm run build
+      # Self-test: probe a real site, write JSON, no score gate.
+      - run: node dist/index.js https://example.com --json report.json
+      - run: node -e "const r=require('./report.json'); if(typeof r.score!=='number') throw new Error('no score'); console.log('self-test ok, score', r.score)"

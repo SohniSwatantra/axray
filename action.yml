@@ -1,0 +1,57 @@
+name: "AXray — Agent Experience Score"
+description: "Lighthouse for Agent Experience (AX). Score how well AI agents can read, understand, and act on your site — and fail the build below a threshold."
+branding:
+  icon: "eye"
+  color: "green"
+
+inputs:
+  url:
+    description: "The deployed URL to evaluate (e.g. your preview or production URL)"
+    required: true
+  min-score:
+    description: "Fail the job if the AX score is below this number"
+    required: false
+    default: "0"
+  council:
+    description: "Also run the LLM council (requires openrouter-api-key)"
+    required: false
+    default: "false"
+  models:
+    description: "Comma-separated OpenRouter model ids for the council"
+    required: false
+    default: ""
+  openrouter-api-key:
+    description: "OpenRouter API key (store as a repo secret) — only needed with council: true"
+    required: false
+    default: ""
+  json-report:
+    description: "Path to write the JSON report (uploaded as an artifact by your workflow if desired)"
+    required: false
+    default: "axray-report.json"
+
+outputs:
+  score:
+    description: "The final AX score (0-100)"
+    value: ${{ steps.run.outputs.score }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: "20"
+
+    - name: Run AXray
+      id: run
+      shell: bash
+      env:
+        OPENROUTER_API_KEY: ${{ inputs.openrouter-api-key }}
+      run: |
+        ARGS="${{ inputs.url }} --min-score ${{ inputs['min-score'] }} --json ${{ inputs['json-report'] }}"
+        if [ "${{ inputs.council }}" = "true" ]; then ARGS="$ARGS --council"; fi
+        if [ -n "${{ inputs.models }}" ]; then ARGS="$ARGS --models ${{ inputs.models }}"; fi
+        npx --yes github:SohniSwatantra/axray $ARGS
+        SCORE=$(node -e "console.log(JSON.parse(require('fs').readFileSync('${{ inputs['json-report'] }}','utf8')).score)")
+        echo "score=$SCORE" >> "$GITHUB_OUTPUT"
+        echo "### AXray — Agent Experience Score: $SCORE/100" >> "$GITHUB_STEP_SUMMARY"
