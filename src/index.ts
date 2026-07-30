@@ -26,22 +26,28 @@ Usage:
 
 Options:
   --min-score <n>   Exit with code 1 if the final score is below n (CI gate)
-  --council         Also run the LLM council (requires OPENROUTER_API_KEY)
+  --council         Run the LLM council (auto-enabled when OPENROUTER_API_KEY is set)
+  --no-council      Skip the council even if OPENROUTER_API_KEY is set
   --models <list>   Comma-separated OpenRouter model ids for the council
                     (default: ${DEFAULT_COUNCIL_MODELS.join(",")})
   --json [file]     Write the full result as JSON (to file, or stdout with -)
   --quiet           Suppress the human-readable report
   --help            Show this help
 
+The multi-model council runs automatically when OPENROUTER_API_KEY is set —
+key present means you want the full verdict. Use --no-council for a fast,
+free, deterministic measured-only run (recommended for per-push CI gates).
+
 Examples:
   npx axray https://example.com --min-score 70
-  OPENROUTER_API_KEY=sk-or-... npx axray https://example.com --council
+  OPENROUTER_API_KEY=sk-or-... npx axray https://example.com
 `;
 
 interface Args {
   url: string;
   minScore: number | null;
   council: boolean;
+  noCouncil: boolean;
   models: string[];
   json: string | null;
   quiet: boolean;
@@ -52,6 +58,7 @@ function parseArgs(argv: string[]): Args | null {
     url: "",
     minScore: null,
     council: false,
+    noCouncil: false,
     models: DEFAULT_COUNCIL_MODELS,
     json: null,
     quiet: false,
@@ -61,6 +68,7 @@ function parseArgs(argv: string[]): Args | null {
     if (a === "--help" || a === "-h") return null;
     else if (a === "--min-score") args.minScore = Number(argv[++i]);
     else if (a === "--council") args.council = true;
+    else if (a === "--no-council") args.noCouncil = true;
     else if (a === "--models") args.models = (argv[++i] || "").split(",").filter(Boolean);
     else if (a === "--json") {
       const next = argv[i + 1];
@@ -117,8 +125,12 @@ async function main() {
     score: measuredScore,
   };
 
-  if (args.council) {
-    const apiKey = process.env.OPENROUTER_API_KEY;
+  // The council is a headline feature: auto-enable it whenever a key is
+  // present (key set = you want the full verdict). --no-council opts out for
+  // fast deterministic CI gates; --council without a key explains what's needed.
+  const apiKey = process.env.OPENROUTER_API_KEY;
+  const wantCouncil = !args.noCouncil && (args.council || !!apiKey);
+  if (wantCouncil) {
     if (!apiKey) {
       console.error(
         "--council requires OPENROUTER_API_KEY (get one at https://openrouter.ai/keys). Running measured-only."

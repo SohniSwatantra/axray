@@ -13,9 +13,9 @@ inputs:
     required: false
     default: "0"
   council:
-    description: "Also run the LLM council (requires openrouter-api-key)"
+    description: "LLM council mode: 'auto' runs it whenever openrouter-api-key is provided (default), 'true' forces it, 'false' skips it for a deterministic measured-only gate"
     required: false
-    default: "false"
+    default: "auto"
   models:
     description: "Comma-separated OpenRouter model ids for the council"
     required: false
@@ -49,7 +49,10 @@ runs:
         OPENROUTER_API_KEY: ${{ inputs.openrouter-api-key }}
       run: |
         ARGS="${{ inputs.url }} --min-score ${{ inputs['min-score'] }} --json ${{ inputs['json-report'] }}"
+        # council: 'auto' lets the CLI decide (runs when a key is present),
+        # 'true' forces it, 'false' pins a deterministic measured-only gate.
         if [ "${{ inputs.council }}" = "true" ]; then ARGS="$ARGS --council"; fi
+        if [ "${{ inputs.council }}" = "false" ]; then ARGS="$ARGS --no-council"; fi
         if [ -n "${{ inputs.models }}" ]; then ARGS="$ARGS --models ${{ inputs.models }}"; fi
         npx --yes github:SohniSwatantra/axray $ARGS
         SCORE=$(node -e "console.log(JSON.parse(require('fs').readFileSync('${{ inputs['json-report'] }}','utf8')).score)")

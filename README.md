@@ -86,16 +86,17 @@ jobs:
           min-score: "70"
 ```
 
-With the LLM council (bring your own [OpenRouter](https://openrouter.ai/keys) key as a repo secret):
+With the LLM council — just provide your [OpenRouter](https://openrouter.ai/keys) key as a repo secret and the council runs automatically:
 
 ```yaml
       - uses: SohniSwatantra/axray@main
         with:
           url: https://your-site.com
           min-score: "70"
-          council: "true"
           openrouter-api-key: ${{ secrets.OPENROUTER_API_KEY }}
 ```
+
+Prefer a deterministic measured-only gate on every push (LLM scores vary slightly run to run)? Pin `council: "false"` and run the council on a nightly schedule instead.
 
 The action writes the score to the job summary and exposes it as an output (`steps.<id>.outputs.score`).
 
@@ -116,13 +117,17 @@ Real HTTP requests, zero guessing:
 
 These roll up into four measured factors — **Structured Data, Content Accessibility, Content Negotiation, Action Readiness** — averaged into the headline score. Sites without an API (agencies, portfolios, blogs) are **not** penalized: a clear documented action counts.
 
-## The LLM council (optional, BYO key)
+## The LLM council (BYO key — auto-enabled)
 
-With `--council` and an `OPENROUTER_API_KEY`, multiple frontier models each score all 8 AX factors (adding Semantic HTML, Meta Tags, Content Clarity, Agent Interaction) **against the measured ground truth** — models are explicitly forbidden from contradicting the HTTP-verified facts. Results are averaged into a final score plus an **ANPS** (Agent Net Promoter Score: would an agent recommend you?).
+The council is the heart of AXray: multiple frontier models each score all 8 AX factors (adding Semantic HTML, Meta Tags, Content Clarity, Agent Interaction) **against the measured ground truth** — models are explicitly forbidden from contradicting the HTTP-verified facts. Results are averaged into a final score plus an **ANPS** (Agent Net Promoter Score: would an agent recommend you?).
+
+**It runs automatically whenever `OPENROUTER_API_KEY` is set** — no flag needed:
 
 ```bash
-OPENROUTER_API_KEY=sk-or-... npx github:SohniSwatantra/axray https://your-site.com --council
+OPENROUTER_API_KEY=sk-or-... npx github:SohniSwatantra/axray https://your-site.com
 ```
+
+Use `--no-council` when the key is set but you want the fast, free, deterministic measured-only run (the right choice for per-push CI gates, since LLM scores vary slightly between runs).
 
 Pick your own models (and cost) with `--models`:
 
@@ -137,7 +142,8 @@ npx github:SohniSwatantra/axray https://your-site.com --council \
 axray <url> [options]
 
 --min-score <n>   Exit 1 if the final score is below n (CI gate)
---council         Run the LLM council (requires OPENROUTER_API_KEY)
+--council         Run the LLM council (auto-enabled when OPENROUTER_API_KEY is set)
+--no-council      Skip the council even if OPENROUTER_API_KEY is set
 --models <list>   Comma-separated OpenRouter model ids
 --json [file]     Write full JSON result (file, or '-' for stdout)
 --quiet           Suppress the human-readable report
