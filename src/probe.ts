@@ -159,6 +159,15 @@ function collectTypes(node: unknown, out: Set<string>): void {
   }
 }
 
+/**
+ * Evidence of an ACTUAL MCP endpoint — an mcp:// scheme, an mcp. subdomain,
+ * an /mcp path, an @scope/mcp package, or the official SDK namespace. A bare
+ * textual mention of "MCP" (e.g. marketing copy about MCP consulting) does
+ * NOT count; that produced false positives.
+ */
+const MCP_ENDPOINT_RE =
+  /(mcp:\/\/)|(\bmcp\.[a-z0-9-]+\.[a-z]{2,})|(https?:\/\/[^\s"'<>)]*\/mcp\b)|(@[a-z0-9-]+\/mcp\b)|(modelcontextprotocol)/im;
+
 /** Pull <loc> URLs out of a sitemap (or sitemap index) body. */
 function extractSitemapLocs(xml: string): string[] {
   return Array.from(xml.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/gi))
@@ -353,7 +362,7 @@ export async function probeAgentReadiness(url: string, html?: string): Promise<M
       signals.rssFeed.present = true;
     }
     // MCP referenced anywhere in the page (e.g. an mcp.* subdomain or /mcp path).
-    if (!signals.apiSurface.hasMcp && /\bmcp[.\/]|model context protocol/i.test(pageHtml)) {
+    if (!signals.apiSurface.hasMcp && MCP_ENDPOINT_RE.test(pageHtml)) {
       signals.apiSurface.hasMcp = true;
     }
   }
@@ -362,7 +371,7 @@ export async function probeAgentReadiness(url: string, html?: string): Promise<M
   if (signals.llmsTxt.present && !signals.apiSurface.hasMcp) {
     const res = await timedFetch(signals.llmsTxt.url);
     const body = res ? await res.text().catch(() => "") : "";
-    if (/\bmcp\b|model context protocol/i.test(body)) signals.apiSurface.hasMcp = true;
+    if (MCP_ENDPOINT_RE.test(body)) signals.apiSurface.hasMcp = true;
   }
 
   // Sample a few sitemap-discovered pages beyond the homepage. Schema (Offer,

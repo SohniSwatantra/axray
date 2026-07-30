@@ -52,6 +52,41 @@ Return ONLY JSON in this exact shape:
 }`;
 }
 
+interface ModelJson {
+  axScore?: number;
+  anps?: number;
+  factors?: Array<{ name: string; score: number; description: string }>;
+  summary?: string;
+}
+
+/**
+ * Parse a model's JSON, tolerating the real-world failure modes: markdown
+ * fences, prose around the JSON, and truncated/malformed tails (some models
+ * emit invalid JSON mid-array). Falls back to regex-salvaging the scalar
+ * fields so a broken factors array doesn't cost us the score.
+ */
+function parseModelJson(text: string): ModelJson | null {
+  const candidate = text.match(/\{[\s\S]*\}/)?.[0] ?? text;
+  try {
+    return JSON.parse(candidate) as ModelJson;
+  } catch {
+    /* fall through to salvage */
+  }
+  const num = (key: string): number | undefined => {
+    const m = text.match(new RegExp(`"${key}"\\s*:\\s*(-?\\d+(?:\\.\\d+)?)`));
+    return m ? Number(m[1]) : undefined;
+  };
+  const axScore = num("axScore");
+  if (axScore === undefined) return null;
+  const summary = text.match(/"summary"\s*:\s*"((?:[^"\\]|\\.)*)"/)?.[1];
+  return {
+    axScore,
+    anps: num("anps"),
+    factors: [],
+    summary: summary ? summary.replace(/\\"/g, '"') : "(salvaged from malformed model JSON)",
+  };
+}
+
 async function callModel(
   model: string,
   prompt: string,
@@ -76,7 +111,7 @@ async function callModel(
       body: JSON.stringify({
         model,
         messages: [{ role: "user", content: prompt }],
-        max_tokens: 2000,
+        max_tokens: 3000, // verbose models truncated at 2000, corrupting the JSON tail
       }),
     });
     if (!res.ok) {
@@ -89,14 +124,8 @@ async function callModel(
       choices?: Array<{ message?: { content?: string } }>;
     };
     const text = data.choices?.[0]?.message?.content || "";
-    const match = text.match(/\{[\s\S]*\}/);
-    if (!match) throw new Error("No JSON in model response");
-    const parsed = JSON.parse(match[0]) as {
-      axScore?: number;
-      anps?: number;
-      factors?: Array<{ name: string; score: number; description: string }>;
-      summary?: string;
-    };
+    const parsed = parseModelJson(text);
+    if (!parsed) throw new Error("No parsable JSON in model response");
     return {
       model,
       axScore: typeof parsed.axScore === "number" ? Math.round(parsed.axScore) : null,
